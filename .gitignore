@@ -27,7 +27,7 @@ go.work.sum
 # env file
 .env
 
-.DS_Store
+**/.DS_Store
 
 # Editor/IDE
 # .idea/
