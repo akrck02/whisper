@@ -2,25 +2,33 @@
 package logger
 
 import (
-	"log"
+	"os"
+	"strings"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
-func Log(msgs ...any) {
-	log.Println(msgs...)
+func Pretty() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
-func Success(msgs ...any) {
-	Log(append([]any{" ✔  |"}, msgs...)...)
+func Info(msgs ...string) {
+	log.Info().Msg(strings.Join(msgs, " "))
 }
 
-func Error(msgs ...any) {
-	Log(append([]any{" 🗙  |"}, msgs...)...)
+func Fatal(msgs ...string) {
+	log.Fatal().Msg(strings.Join(msgs, " "))
+}
+
+func Error(msgs ...string) {
+	log.Error().Msg(strings.Join(msgs, " "))
 }
 
 func Errorf(err error) {
-	Log(append([]any{" 🗙  |"}, err.Error())...)
+	log.Error().Msg(err.Error())
 }
 
-func Warning(msgs ...any) {
-	Log(append([]any{" ⚠   |"}, msgs...)...)
+func Warning(msgs ...string) {
+	log.Warn().Msg(strings.Join(msgs, " "))
 }

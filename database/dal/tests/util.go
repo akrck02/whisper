@@ -1,0 +1,51 @@
+package tests
+
+import (
+	"database/sql"
+	"fmt"
+	"testing"
+
+	"github.com/akrck02/whisper/database"
+	"github.com/akrck02/whisper/database/tables"
+	verrors "github.com/akrck02/whisper/sdk/errors"
+	"github.com/akrck02/whisper/sdk/logger"
+)
+
+const TestDatabasePath string = "../../.."
+
+func Assert(t *testing.T, predicate bool, failMessage string) {
+	if !predicate {
+		logger.Error("Test failed:", failMessage)
+		t.FailNow()
+	}
+}
+
+func AssertVErrorDoesNotExist(t *testing.T, error *verrors.VError) {
+	if nil != error {
+		logger.Error("Test failed with error:", error.Message)
+		t.FailNow()
+	}
+}
+
+func AssertVError(t *testing.T, error *verrors.VError, code verrors.VErrorCode, message string) {
+	if nil == error {
+		logger.Error("Test failed because error is empty.")
+		t.FailNow()
+	}
+	Assert(t, error.Code == code && error.Message == message, fmt.Sprintf("\n[%d - %s] \nwas expected but \n[%d - %s] \nwas found\n", code, message, error.Code, error.Message))
+}
+
+func NewTestDatabase() (*sql.DB, *verrors.VError) {
+
+	db, err := database.Connect(":memory:")
+	if err != nil {
+		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
+	}
+
+	err = tables.UpdateDatabaseTablesToLatestVersion(TestDatabasePath, db)
+	if err != nil {
+		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
+	}
+
+	return db, nil
+}

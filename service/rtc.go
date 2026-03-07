@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/akrck02/whisper/sdk/logger"
 	"github.com/pion/webrtc/v4"
 )
 
@@ -23,12 +24,12 @@ func StartRTC() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Peer connection created successfully!")
+	logger.Info("Peer connection created successfully!")
 
 	// Close the peer connection when you're done with it
 	defer func() {
 		if err := peerConnection.Close(); err != nil {
-			fmt.Printf("Error closing peer connection: %s", err)
+			logger.Error(fmt.Sprintf("Error closing peer connection: %s", err))
 		}
 	}()
 
@@ -57,7 +58,7 @@ func StartRTC() {
 				return
 			}
 
-			fmt.Println("RTCP packet received!")
+			logger.Info("RTCP packet received!")
 			_ = i
 		}
 	}()
@@ -65,7 +66,7 @@ func StartRTC() {
 	// Handle incoming media streams
 	peerConnection.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		// Print incoming stream's info
-		fmt.Printf("Got track: %+v", track)
+		logger.Info(fmt.Sprintf("Got track: %+v", track))
 
 		// Read incoming packets
 		b := make([]byte, 1500)
@@ -75,12 +76,12 @@ func StartRTC() {
 				panic(err)
 			}
 
-			fmt.Printf("Got packet with length: %d", i)
+			logger.Info(fmt.Sprintf("Got packet with length: %d", i))
 			// Process the packet here
 		}
 	})
 
 	// Wait for user input to keep the connection alive
-	fmt.Println("Press Ctrl+C to exit")
+	logger.Info("Press Ctrl+C to exit")
 	select {}
 }

@@ -1,10 +1,9 @@
 package service
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/akrck02/whisper/sdk/logger"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,23 +13,23 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func HandleWebsocketConnections(w http.ResponseWriter, r *http.Request) {
+func WebSocketSignaling(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 	// Read every message in a new go routine
 	go func() {
 		for {
 			messageType, p, err := ws.ReadMessage()
 			if err != nil {
-				log.Println(err)
+				logger.Errorf(err)
 				return
 			}
-			fmt.Println(string(p))
+			logger.Info(string(p))
 
 			if err := ws.WriteMessage(messageType, p); err != nil {
-				log.Println(err)
+				logger.Errorf(err)
 				return
 			}
 		}

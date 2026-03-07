@@ -12,7 +12,7 @@ import (
 func GetConnection() (*sql.DB, error) {
 	db, err := Connect("whisper.db")
 	if nil != err {
-		logger.Error(err)
+		logger.Errorf(err)
 		return nil, err
 	}
 
