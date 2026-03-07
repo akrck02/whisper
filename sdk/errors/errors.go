@@ -149,7 +149,8 @@ const (
 
 	EmailEmptyMessage string = "email cannot be empty"
 
-	ServerOwnerEmptyMessage string = "owner cannot be empty"
+	ServerNotFoundError     string = "Server not found."
+	ServerOwnerEmptyMessage string = "server owner cannot be empty"
 
 	UserNotFoundMessage            string = "user not found"
 	UserIDNegativeMessage          string = "user id must be positive"

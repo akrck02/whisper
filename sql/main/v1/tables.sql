@@ -5,6 +5,7 @@ CREATE TABLE database_metadata(
 
 CREATE TABLE user(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	uuid TEXT NOT NULL.
 	email TEXT NOT NULL,
 	username TEXT NOT NULL,
 	profile_pic TEXT,
@@ -12,6 +13,7 @@ CREATE TABLE user(
 	insert_date INTEGER NOT NULL
 );
 
+CREATE INDEX idx_user_uuid ON user(uuid);
 CREATE INDEX idx_user_email ON user(email);
 CREATE INDEX idx_user_username ON user(username);
 
@@ -26,22 +28,9 @@ CREATE TABLE device(
  	FOREIGN KEY (user_id) REFERENCES user(id)
 );
 
-CREATE TABLE server(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	owner_id INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	profile_pic TEXT,
-	insert_date INTEGER NOT NULL,
-	FOREIGN KEY (owner_id) REFERENCES user(id)
-);
-
-CREATE TABLE channel(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	server_id INTEGER NOT NULL,
-	type INTEGER NOT NULL,
-	name TEXT NOT NULL,
-	description TEXT NOT NULL,
-	insert_date INTEGER NOT NULL,
-	FOREIGN KEY (server_id) REFERENCES server(id)
+CREATE TABLE user_server(
+	user_id INTEGER NOT NULL,
+	server_uuid TEXT NOT NULL,
+	PRIMARY KEY (user_id, server_uuid),
+	FOREIGN KEY (user_id) REFERENCES user(id)
 )

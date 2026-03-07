@@ -42,7 +42,7 @@ func NewTestDatabase() (*sql.DB, *verrors.VError) {
 		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}
 
-	err = tables.UpdateDatabaseTablesToLatestVersion(TestDatabasePath, db)
+	err = tables.UpdateDatabaseTablesToLatestVersion(TestDatabasePath, tables.MainDatabase, db)
 	if err != nil {
 		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}

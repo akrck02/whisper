@@ -120,7 +120,7 @@ func GetServer(db *sql.DB, id int64) (*models.Server, *verrors.VError) {
 	defer rows.Close()
 
 	if !rows.Next() {
-		return nil, verrors.NotFound("Server not found.")
+		return nil, verrors.NotFound(verrors.ServerNotFoundError)
 	}
 
 	var ownerId int64
