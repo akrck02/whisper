@@ -18,7 +18,6 @@ func CreateServer(db *sql.DB, server *models.Server) (*int64, *verrors.VError) {
 	}
 
 	// TODO: Check that server owner exists
-
 	statement, err := db.Prepare(
 		"INSERT INTO server(owner, name, description, profile_pic, insert_date) VALUES(?,?,?,?,?)",
 	)
@@ -167,4 +166,8 @@ func DeleteServer(db *sql.DB, id int64) *verrors.VError {
 	}
 
 	return nil
+}
+
+func GetAllUserServers(db *sql.DB, userId int64) (*[]models.Server, *verrors.VError) {
+	return nil, nil
 }

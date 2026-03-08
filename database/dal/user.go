@@ -83,27 +83,308 @@ func CreateUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 	return &user.ID, nil
 }
 
-func UpdateUser(db *sql.DB) *verrors.VError {
-	err := verrors.TODO()
-	return &err
+func UpdateUserEmail(db *sql.DB, userId int64, email string) *verrors.VError {
+
+	if nil == db {
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	err := validations.ValidateIsPositive(userId, "user id")
+	if err != nil {
+		return verrors.InvalidRequest(err.Error())
+	}
+
+	err = validations.ValidateEmail(email)
+	if err != nil {
+		return verrors.InvalidRequest(err.Error())
+	}
+
+	usr, userGetErr := GetUserByEmail(db, email)
+	if nil == userGetErr && nil != usr {
+		return verrors.New(verrors.UserAlreadyExistsErrorCode, verrors.UserAlreadyExistsMessage)
+	}
+
+	statement, err := db.Prepare(`
+		UPDATE user
+		SET email=?
+		WHERE id=?
+	`)
+
+	res, err := statement.Exec(email, userId)
+	if nil != err {
+		return verrors.DatabaseError(err.Error())
+	}
+
+	affectedRows, err := res.RowsAffected()
+	if nil != err {
+		return verrors.DatabaseError(err.Error())
+	}
+
+	if affectedRows == 0 {
+		return verrors.DatabaseError(verrors.UserCannotUpdateMessage)
+	}
+
+	return nil
+}
+
+func UpdateUserUsername(db *sql.DB, userId int64, username string) *verrors.VError {
+
+	if nil == db {
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	err := validations.ValidateIsPositive(userId, "user id")
+	if err != nil {
+		return verrors.InvalidRequest(err.Error())
+	}
+
+	usr, userGetErr := GetUserByUsername(db, username)
+	if nil == userGetErr && nil != usr {
+		return verrors.New(verrors.UserAlreadyExistsErrorCode, verrors.UserAlreadyExistsMessage)
+	}
+
+	statement, err := db.Prepare(`
+		UPDATE user
+		SET username=?
+		WHERE id=?
+	`)
+
+	res, err := statement.Exec(username, userId)
+	if nil != err {
+		return verrors.DatabaseError(err.Error())
+	}
+
+	affectedRows, err := res.RowsAffected()
+	if nil != err {
+		return verrors.DatabaseError(err.Error())
+	}
+
+	if affectedRows == 0 {
+		return verrors.DatabaseError(verrors.UserCannotUpdateMessage)
+	}
+
+	return nil
+}
+
+func UpdateUserPassword(db *sql.DB, userId int64, password string) *verrors.VError {
+
+	if nil == db {
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	err := validations.ValidateIsPositive(userId, "user id")
+	if err != nil {
+		return verrors.InvalidRequest(err.Error())
+	}
+
+	err = validations.ValidatePassword(password)
+	if nil != err {
+		return verrors.InvalidRequest(err.Error())
+	}
+
+	hashedPassword, err := cryptography.Hash(password)
+	if nil != err {
+		return verrors.Unexpected(err.Error())
+	}
+
+	statement, err := db.Prepare(`
+		UPDATE user
+		SET username=?
+		WHERE id=?
+	`)
+
+	res, err := statement.Exec(hashedPassword, userId)
+	if nil != err {
+		return verrors.DatabaseError(err.Error())
+	}
+
+	affectedRows, err := res.RowsAffected()
+	if nil != err {
+		return verrors.DatabaseError(err.Error())
+	}
+
+	if affectedRows == 0 {
+		return verrors.DatabaseError(verrors.UserCannotUpdateMessage)
+	}
+
+	return nil
 }
 
 func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
-	err := verrors.TODO()
-	return nil, &err
+
+	if nil == db {
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	err := validations.ValidateIsPositive(id, "user id")
+	if nil != err {
+		return nil, verrors.InvalidRequest(err.Error())
+	}
+
+	statement, err := db.Prepare(`
+		SELECT
+			uuid,
+			email,
+			username,
+			profile_pic,
+			password,
+			insert_date
+		FROM user
+		WHERE id=?
+	`)
+
+	rows, err := statement.Query(id)
+	if nil != err {
+		return nil, verrors.DatabaseError(err.Error())
+	}
+
+	var uuid string
+	var email string
+	var username string
+	var profilePic string
+	var password string
+	var insertDate int64
+
+	rows.Scan(
+		&uuid,
+		&email,
+		&username,
+		&profilePic,
+		&password,
+		&insertDate,
+	)
+
+	return &models.User{
+		ID:             id,
+		UUID:           uuid,
+		Email:          email,
+		Username:       username,
+		ProfilePicture: profilePic,
+		Password:       password,
+		InsertDate:     insertDate,
+	}, nil
 }
 
 func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
-	err := verrors.TODO()
-	return nil, &err
+
+	if nil == db {
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	statement, err := db.Prepare(`
+		SELECT
+			id,
+			uuid,
+			username,
+			profile_pic,
+			password,
+			insert_date
+		FROM user
+		WHERE email=?
+	`)
+
+	rows, err := statement.Query(email)
+	if nil != err {
+		return nil, verrors.DatabaseError(err.Error())
+	}
+
+	var id int64
+	var uuid string
+	var username string
+	var profilePic string
+	var password string
+	var insertDate int64
+
+	rows.Scan(
+		&id,
+		&uuid,
+		&username,
+		&profilePic,
+		&password,
+		&insertDate,
+	)
+
+	return &models.User{
+		ID:             id,
+		UUID:           uuid,
+		Email:          email,
+		Username:       username,
+		ProfilePicture: profilePic,
+		Password:       password,
+		InsertDate:     insertDate,
+	}, nil
 }
 
 func GetUserByUsername(db *sql.DB, username string) (*models.User, *verrors.VError) {
-	err := verrors.TODO()
-	return nil, &err
+
+	if nil == db {
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	statement, err := db.Prepare(`
+		SELECT
+			id,
+			uuid,
+			email,
+			profile_pic,
+			password,
+			insert_date
+		FROM user
+		WHERE username=?
+	`)
+
+	rows, err := statement.Query(username)
+	if nil != err {
+		return nil, verrors.DatabaseError(err.Error())
+	}
+
+	var id int64
+	var uuid string
+	var email string
+	var profilePic string
+	var password string
+	var insertDate int64
+
+	rows.Scan(
+		&id,
+		&uuid,
+		&email,
+		&profilePic,
+		&password,
+		&insertDate,
+	)
+
+	return &models.User{
+		ID:             id,
+		UUID:           uuid,
+		Email:          email,
+		Username:       username,
+		ProfilePicture: profilePic,
+		Password:       password,
+		InsertDate:     insertDate,
+	}, nil
 }
 
 func DeleteUser(db *sql.DB, id int64) *verrors.VError {
-	err := verrors.TODO()
-	return &err
+
+	if nil == db {
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	statement, err := db.Prepare(`DELETE FROM user WHERE id=?`)
+	res, err := statement.Exec(id)
+	if nil != err {
+		return verrors.DatabaseError(err.Error())
+	}
+
+	affectedRows, err := res.RowsAffected()
+	if nil != err {
+		return verrors.DatabaseError(err.Error())
+	}
+
+	if affectedRows == 0 {
+		return verrors.DatabaseError(verrors.UserCannotDeleteMessage)
+	}
+
+	return nil
 }
