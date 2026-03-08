@@ -36,7 +36,7 @@ func AssertVError(t *testing.T, error *verrors.VError, code verrors.VErrorCode, 
 	Assert(t, error.Code == code && error.Message == message, fmt.Sprintf("\n[%d - %s] \nwas expected but \n[%d - %s] \nwas found\n", code, message, error.Code, error.Message))
 }
 
-func NewTestDatabase() (*sql.DB, *verrors.VError) {
+func NewTestDatabase(databaseType tables.AvailableDatabase) (*sql.DB, *verrors.VError) {
 
 	logger.Pretty()
 
@@ -50,7 +50,7 @@ func NewTestDatabase() (*sql.DB, *verrors.VError) {
 		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}
 
-	err = tables.UpdateDatabaseTablesToLatestVersion(TestDatabasePath, tables.MainDatabase, db)
+	err = tables.UpdateDatabaseTablesToLatestVersion(TestDatabasePath, databaseType, db)
 	if err != nil {
 		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}

@@ -5,12 +5,10 @@ CREATE TABLE database_metadata(
 
 CREATE TABLE server(
 	uuid TEXT PRIMARY KEY,
-	owner_id INTEGER NOT NULL,
 	name TEXT NOT NULL,
 	description TEXT NOT NULL,
 	profile_pic TEXT,
-	insert_date INTEGER NOT NULL,
-	FOREIGN KEY (owner_id) REFERENCES user(id)
+	insert_date INTEGER NOT NULL
 );
 
 CREATE TABLE channel(

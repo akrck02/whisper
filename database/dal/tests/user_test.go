@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"github.com/akrck02/whisper/database/dal"
+	"github.com/akrck02/whisper/database/tables"
 	verrors "github.com/akrck02/whisper/sdk/errors"
 	"github.com/akrck02/whisper/sdk/models"
 )
 
 func TestUserCrud(t *testing.T) {
-	db, err := NewTestDatabase()
+	db, err := NewTestDatabase(tables.MainDatabase)
 	AssertVErrorDoesNotExist(t, err)
 	defer db.Close()
 
@@ -20,8 +21,8 @@ func TestUserCrud(t *testing.T) {
 		Password: "$P4ssw0rdW3db1128",
 	}
 
-	t.Run("Register validations", func(t *testing.T) { createUserValidations(t, db) })
-	t.Run("Register user", func(t *testing.T) { expectedUser = createUser(t, db, expectedUser) })
+	t.Run("Create user validations", func(t *testing.T) { createUserValidations(t, db) })
+	t.Run("Create user", func(t *testing.T) { expectedUser = createUser(t, db, expectedUser) })
 
 	t.Run("Get user validations", func(t *testing.T) { getUserValidations(t, db) })
 
@@ -73,7 +74,7 @@ func createUser(t *testing.T, db *sql.DB, user *models.User) *models.User {
 
 	obtainedUser, err := dal.GetUser(db, *userID)
 	AssertVErrorDoesNotExist(t, err)
-	Assert(t, nil != obtainedUser && user.Email == obtainedUser.Email, "expected user and obtained user mismatch")
+	Assert(t, nil != obtainedUser && user.Email == obtainedUser.Email, "expected and obtained user mismatch")
 	return obtainedUser
 }
 

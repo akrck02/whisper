@@ -6,44 +6,74 @@ import (
 
 	verrors "github.com/akrck02/whisper/sdk/errors"
 	"github.com/akrck02/whisper/sdk/models"
+	"github.com/akrck02/whisper/sdk/validations"
+	"github.com/google/uuid"
 )
 
-func CreateServer(db *sql.DB, server *models.Server) (*int64, *verrors.VError) {
-	if nil == db {
-		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+func CreateServer(mainDb *sql.DB, serverDb *sql.DB, ownerId int64, server *models.Server) (string, *verrors.VError) {
+
+	if nil == mainDb {
+		return "", verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	if nil == serverDb {
+		return "", verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	if 0 == ownerId {
+		return "", verrors.InvalidRequest(verrors.ServerOwnerEmptyMessage)
+	}
+
+	err := validations.ValidateIsPositive(ownerId, "server owner id")
+	if nil != err {
+		return "", verrors.InvalidRequest(err.Error())
+	}
+
+	usr, usrGetErr := GetUser(mainDb, ownerId)
+	if nil != usrGetErr || nil == usr {
+		return "", verrors.InvalidRequest(verrors.ServerOwnerNotFoundMessage)
 	}
 
 	if nil == server {
-		return nil, verrors.InvalidRequest(verrors.ServerOwnerEmptyMessage)
+		return "", verrors.InvalidRequest(verrors.ServerEmptyMessage)
 	}
 
-	// TODO: Check that server owner exists
-	statement, err := db.Prepare(
-		"INSERT INTO server(owner, name, description, profile_pic, insert_date) VALUES(?,?,?,?,?)",
+	if "" == server.Name {
+		return "", verrors.InvalidRequest(verrors.ServerNameEmptyMessage)
+	}
+
+	statement, err := serverDb.Prepare(
+		"INSERT INTO server (uuid, name, description, profile_pic, insert_date) VALUES(?,?,?,?,?)",
 	)
 
 	if nil != err {
-		return nil, verrors.DatabaseError(err.Error())
+		return "", verrors.DatabaseError(err.Error())
 	}
 
+	newUuid := uuid.New()
 	res, err := statement.Exec(
-		server.Owner,
+		newUuid,
 		server.Name,
-		server.ProfilePic,
 		server.Description,
-		time.Now(),
+		server.ProfilePic,
+		time.Now().UnixMilli(),
 	)
 
 	if nil != err {
-		return nil, verrors.DatabaseError(err.Error())
+		return "", verrors.DatabaseError(err.Error())
 	}
 
-	server.ID, err = res.LastInsertId()
+	affectedRows, err := res.RowsAffected()
 	if nil != err {
-		return nil, verrors.DatabaseError(err.Error())
+		return "", verrors.DatabaseError(err.Error())
 	}
 
-	return &server.ID, nil
+	if affectedRows == 0 {
+		return "", verrors.DatabaseError("")
+	}
+
+	server.UUID = newUuid.String()
+	return server.UUID, nil
 
 }
 
@@ -62,7 +92,7 @@ func UpdateServer(db *sql.DB, server *models.Server) *verrors.VError {
 		SET name=?,
 		description=?,
 		profile_pic=?
-		WHERE id=?
+		WHERE uuid=?
 	`)
 
 	if nil != err {
@@ -73,7 +103,7 @@ func UpdateServer(db *sql.DB, server *models.Server) *verrors.VError {
 		server.Name,
 		server.Description,
 		server.ProfilePic,
-		server.ID,
+		server.UUID,
 	)
 	if nil != err {
 		return verrors.DatabaseError(err.Error())
@@ -92,27 +122,26 @@ func UpdateServer(db *sql.DB, server *models.Server) *verrors.VError {
 
 }
 
-func GetServer(db *sql.DB, id int64) (*models.Server, *verrors.VError) {
+func GetServer(db *sql.DB, uuid string) (*models.Server, *verrors.VError) {
 
 	if nil == db {
 		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	statement, err := db.Prepare(`
-		SELECT user_agent,
-			owner_id,
+		SELECT
 			name,
 			description,
 			profile_pic,
 			insert_date
 		FROM server
-		WHERE user_id = ?
+		WHERE uuid = ?
 	`)
 	if nil != err {
 		return nil, verrors.DatabaseError(err.Error())
 	}
 
-	rows, err := statement.Query(id)
+	rows, err := statement.Query(uuid)
 	if nil != err {
 		return nil, verrors.DatabaseError(err.Error())
 	}
@@ -122,16 +151,14 @@ func GetServer(db *sql.DB, id int64) (*models.Server, *verrors.VError) {
 		return nil, verrors.NotFound(verrors.ServerNotFoundError)
 	}
 
-	var ownerId int64
 	var name string
 	var description string
 	var profilePic string
 	var insertDate int64
-	rows.Scan(&id, &ownerId, &name, &description, &profilePic, &insertDate)
+	rows.Scan(&name, &description, &profilePic, &insertDate)
 
 	return &models.Server{
-		ID:          id,
-		Owner:       ownerId,
+		UUID:        uuid,
 		Name:        name,
 		Description: description,
 		ProfilePic:  profilePic,

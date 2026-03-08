@@ -31,6 +31,7 @@ CREATE TABLE device(
 CREATE TABLE user_server(
 	user_id INTEGER NOT NULL,
 	server_uuid TEXT NOT NULL,
+	user_type INTEGER NOT NULL,
 	PRIMARY KEY (user_id, server_uuid),
 	FOREIGN KEY (user_id) REFERENCES user(id)
 );
