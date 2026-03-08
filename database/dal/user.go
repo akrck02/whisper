@@ -26,6 +26,10 @@ func CreateUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 		return nil, verrors.InvalidRequest(err.Error())
 	}
 
+	if user.Username == "" {
+		return nil, verrors.InvalidRequest(verrors.UserNameEmptyMessage)
+	}
+
 	err = validations.ValidatePassword(user.Password)
 	if nil != err {
 		return nil, verrors.InvalidRequest(err.Error())
@@ -54,8 +58,9 @@ func CreateUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 			email,
 			username,
 			profile_pic,
-			password
-		) VALUES(?,?,?,?,?)
+			password,
+			insert_date
+		) VALUES(?,?,?,?,?,?)
 	`)
 
 	if nil != err {
@@ -68,7 +73,7 @@ func CreateUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 		user.Username,
 		user.ProfilePicture,
 		hashedPassword,
-		time.Now(),
+		time.Now().UnixMilli(),
 	)
 
 	if nil != err {
@@ -238,6 +243,11 @@ func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
 		return nil, verrors.DatabaseError(err.Error())
 	}
 
+	if !rows.Next() {
+		return nil, verrors.NotFound(verrors.UserNotFoundMessage)
+	}
+	defer rows.Close()
+
 	var uuid string
 	var email string
 	var username string
@@ -288,6 +298,11 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
 		return nil, verrors.DatabaseError(err.Error())
 	}
 
+	if !rows.Next() {
+		return nil, verrors.NotFound(verrors.UserNotFoundMessage)
+	}
+	defer rows.Close()
+
 	var id int64
 	var uuid string
 	var username string
@@ -336,6 +351,11 @@ func GetUserByUsername(db *sql.DB, username string) (*models.User, *verrors.VErr
 	rows, err := statement.Query(username)
 	if nil != err {
 		return nil, verrors.DatabaseError(err.Error())
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil, verrors.NotFound(verrors.UserNotFoundMessage)
 	}
 
 	var id int64

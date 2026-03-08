@@ -5,7 +5,7 @@ CREATE TABLE database_metadata(
 
 CREATE TABLE user(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	uuid TEXT NOT NULL.
+	uuid TEXT NOT NULL,
 	email TEXT NOT NULL,
 	username TEXT NOT NULL,
 	profile_pic TEXT,
@@ -33,4 +33,4 @@ CREATE TABLE user_server(
 	server_uuid TEXT NOT NULL,
 	PRIMARY KEY (user_id, server_uuid),
 	FOREIGN KEY (user_id) REFERENCES user(id)
-)
+);

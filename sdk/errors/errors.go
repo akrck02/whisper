@@ -158,6 +158,7 @@ const (
 	UserCannotUpdateMessage        string = "cannot update user"
 	UserAlreadyExistsMessage       string = "user already exists"
 	UserProfilePictureEmptyMessage string = "no profile picture provided"
+	UserNameEmptyMessage           string = "no username provided"
 
 	DeviceEmptyMessage          string = "device cannot be empty"
 	DeviceAddressEmptyMessage   string = "device address cannot be empty"

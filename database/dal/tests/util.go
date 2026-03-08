@@ -12,6 +12,7 @@ import (
 )
 
 const TestDatabasePath string = "../../.."
+const USE_IN_MEMORY_DATABASE = true
 
 func Assert(t *testing.T, predicate bool, failMessage string) {
 	if !predicate {
@@ -37,7 +38,14 @@ func AssertVError(t *testing.T, error *verrors.VError, code verrors.VErrorCode, 
 
 func NewTestDatabase() (*sql.DB, *verrors.VError) {
 
-	db, err := database.Connect(":memory:")
+	logger.Pretty()
+
+	var databasePath = fmt.Sprintf("%s/test.db", TestDatabasePath)
+	if USE_IN_MEMORY_DATABASE {
+		databasePath = ":memory:"
+	}
+
+	db, err := database.Connect(databasePath)
 	if err != nil {
 		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}
