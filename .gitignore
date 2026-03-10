@@ -34,3 +34,5 @@ go.work.sum
 # .vscode/
 
 whisper
+*.db
+*.db-*

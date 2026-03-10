@@ -1,0 +1,19 @@
+package middleware
+
+import (
+	"time"
+
+	apimodels "github.com/akrck02/whisper/modules/api/models"
+	verrors "github.com/akrck02/whisper/sdk/errors"
+)
+
+func Trazability(context *apimodels.APIContext) *verrors.APIError {
+	time := time.Now().UnixMilli()
+
+	context.Trazability = apimodels.Trazability{
+		Endpoint:  context.Trazability.Endpoint,
+		Timestamp: &time,
+	}
+
+	return nil
+}

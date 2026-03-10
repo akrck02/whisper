@@ -72,7 +72,7 @@ func createUser(t *testing.T, db *sql.DB, user *models.User) *models.User {
 	userID, err := dal.CreateUser(db, user)
 	AssertVErrorDoesNotExist(t, err)
 
-	obtainedUser, err := dal.GetUser(db, *userID)
+	obtainedUser, err := dal.GetUserByUuid(db, userID)
 	AssertVErrorDoesNotExist(t, err)
 	Assert(t, nil != obtainedUser && user.Email == obtainedUser.Email, "expected and obtained user mismatch")
 	return obtainedUser

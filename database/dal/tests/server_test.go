@@ -20,14 +20,14 @@ func TestServerCrud(t *testing.T) {
 	AssertVErrorDoesNotExist(t, err)
 	defer serverDb.Close()
 
-	userId, err := dal.CreateUser(mainDb, &models.User{
+	userUuid, err := dal.CreateUser(mainDb, &models.User{
 		Email:    "user@whisper.org",
 		Username: "user01",
 		Password: "$P4ssw0rdW3db1128",
 	})
 	AssertVErrorDoesNotExist(t, err)
 
-	ownerUser, err := dal.GetUser(mainDb, *userId)
+	ownerUser, err := dal.GetUserByUuid(mainDb, userUuid)
 	AssertVErrorDoesNotExist(t, err)
 
 	expectedServer := &models.Server{

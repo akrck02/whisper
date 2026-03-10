@@ -1,8 +1,8 @@
 package models
 
 type Channel struct {
-	CType Channeltype `json:"type,omitempty"`
-	Name  string      `json:"name,omitempty"`
+	CType Channeltype `json:"ty,omitempty"`
+	Name  string      `json:"nm,omitempty"`
 }
 
 type Channeltype int

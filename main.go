@@ -3,21 +3,28 @@ package main
 import (
 	"net/http"
 
+	"github.com/akrck02/whisper/modules/api"
 	"github.com/akrck02/whisper/sdk/logger"
-	"github.com/akrck02/whisper/service"
+	services "github.com/akrck02/whisper/service"
 )
 
 func main() {
 
 	logger.Pretty()
 
-	//startMediaServices()
+	startApi()
+	startMediaServices()
+}
+
+func startApi() {
+	api.Start()
 }
 
 func startMediaServices() {
-	go service.StartRTC()
 
-	http.HandleFunc("/ws", service.WebSocketSignaling)
+	go services.StartRTC()
+
+	http.HandleFunc("/ws", services.WebSocketSignaling)
 
 	logger.Info("http server started on :8001")
 	err := http.ListenAndServe(":8001", nil)

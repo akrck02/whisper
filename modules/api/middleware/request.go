@@ -1,0 +1,94 @@
+package middleware
+
+import (
+	"mime/multipart"
+	"net/http"
+	"regexp"
+
+	apimodels "github.com/akrck02/whisper/modules/api/models"
+	verrors "github.com/akrck02/whisper/sdk/errors"
+)
+
+const UserAgentHeader = "User-Agent"
+
+// Request handler middleware function
+func Request(r *http.Request, context *apimodels.APIContext) *verrors.APIError {
+	parserError := r.ParseForm()
+
+	if parserError != nil {
+		return &verrors.APIError{
+			Status: http.StatusBadRequest,
+			VError: verrors.VError{
+				Code:    verrors.InvalidRequestErrorCode,
+				Message: parserError.Error(),
+			},
+		}
+	}
+
+	context.Request = apimodels.Request{
+		Authorization: r.Header.Get(AuthorizationHeader),
+		IP:            r.Host,
+		UserAgent:     r.Header.Get(UserAgentHeader),
+		Headers:       map[string]string{},
+		Body:          r.Body,
+		Params:        map[string]string{},
+		Files:         map[string][]*multipart.FileHeader{},
+	}
+
+	// Add files
+	if context.Trazability.Endpoint.IsMultipartForm {
+		err := r.ParseMultipartForm(32 << 20)
+		if nil != err {
+			return verrors.NewAPIError(verrors.New(verrors.InvalidRequestErrorCode, err.Error()))
+		}
+
+		if r.MultipartForm != nil {
+			context.Request.Files = r.MultipartForm.File
+		}
+	}
+
+	// Add headers to the context
+	for key, value := range r.Header {
+		for _, v := range value {
+			context.Request.Headers[key] = v
+		}
+	}
+
+	// Add params to the context
+	for key, value := range r.Form {
+		for _, v := range value {
+			context.Request.Params[key] = v
+		}
+	}
+
+	// Get possible url path parameters
+	pathParams := getPathParamNames(context.Trazability.Endpoint.Path)
+	for _, param := range pathParams {
+		context.Request.Params[param] = r.PathValue(param)
+	}
+
+	return nil
+}
+
+// Get the path param names
+func getPathParamNames(path string) []string {
+	params := []string{}
+
+	// regex to find path parameters
+	regex, err := regexp.Compile("{(.*?)}")
+	if err != nil {
+		return params
+	}
+
+	params = regex.FindAllString(path, -1)
+
+	if params == nil {
+		params = []string{}
+	}
+
+	for i, param := range params {
+		params[i] = param[1 : len(param)-1]
+	}
+
+	return params
+}

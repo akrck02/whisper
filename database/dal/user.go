@@ -11,45 +11,45 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
+func CreateUser(db *sql.DB, user *models.User) (string, *verrors.VError) {
 
 	if nil == db {
-		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+		return "", verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	if nil == user {
-		return nil, verrors.InvalidRequest(verrors.UserNotFoundMessage)
+		return "", verrors.InvalidRequest(verrors.UserNotFoundMessage)
 	}
 
 	err := validations.ValidateEmail(user.Email)
 	if nil != err {
-		return nil, verrors.InvalidRequest(err.Error())
+		return "", verrors.InvalidRequest(err.Error())
 	}
 
 	if user.Username == "" {
-		return nil, verrors.InvalidRequest(verrors.UserNameEmptyMessage)
+		return "", verrors.InvalidRequest(verrors.UserNameEmptyMessage)
 	}
 
 	err = validations.ValidatePassword(user.Password)
 	if nil != err {
-		return nil, verrors.InvalidRequest(err.Error())
+		return "", verrors.InvalidRequest(err.Error())
 	}
 
 	hashedPassword, err := cryptography.Hash(user.Password)
 	if nil != err {
-		return nil, verrors.Unexpected(err.Error())
+		return "", verrors.Unexpected(err.Error())
 	}
 
 	// Check email
 	usr, userGetErr := GetUserByEmail(db, user.Email)
 	if nil == userGetErr && nil != usr {
-		return nil, verrors.New(verrors.UserAlreadyExistsErrorCode, verrors.UserAlreadyExistsMessage)
+		return "", verrors.New(verrors.UserAlreadyExistsErrorCode, verrors.UserAlreadyExistsMessage)
 	}
 
 	// Check username
 	usr, userGetErr = GetUserByUsername(db, user.Username)
 	if nil == userGetErr && nil != usr {
-		return nil, verrors.New(verrors.UserAlreadyExistsErrorCode, verrors.UserAlreadyExistsMessage)
+		return "", verrors.New(verrors.UserAlreadyExistsErrorCode, verrors.UserAlreadyExistsMessage)
 	}
 
 	statement, err := db.Prepare(`
@@ -64,11 +64,12 @@ func CreateUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 	`)
 
 	if nil != err {
-		return nil, verrors.DatabaseError(err.Error())
+		return "", verrors.DatabaseError(err.Error())
 	}
 
-	res, err := statement.Exec(
-		uuid.NewString(),
+	userUuid := uuid.NewString()
+	_, err = statement.Exec(
+		userUuid,
 		user.Email,
 		user.Username,
 		user.ProfilePicture,
@@ -77,15 +78,10 @@ func CreateUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 	)
 
 	if nil != err {
-		return nil, verrors.DatabaseError(err.Error())
+		return "", verrors.DatabaseError(err.Error())
 	}
 
-	user.ID, err = res.LastInsertId()
-	if nil != err {
-		return nil, verrors.DatabaseError(err.Error())
-	}
-
-	return &user.ID, nil
+	return userUuid, nil
 }
 
 func UpdateUserEmail(db *sql.DB, userId int64, email string) *verrors.VError {
@@ -257,6 +253,65 @@ func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
 
 	rows.Scan(
 		&uuid,
+		&email,
+		&username,
+		&profilePic,
+		&password,
+		&insertDate,
+	)
+
+	return &models.User{
+		ID:             id,
+		UUID:           uuid,
+		Email:          email,
+		Username:       username,
+		ProfilePicture: profilePic,
+		Password:       password,
+		InsertDate:     insertDate,
+	}, nil
+}
+
+func GetUserByUuid(db *sql.DB, uuid string) (*models.User, *verrors.VError) {
+
+	if nil == db {
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+	}
+
+	if "" == uuid {
+		return nil, verrors.InvalidRequest("uuid cannot be empty")
+	}
+
+	statement, err := db.Prepare(`
+		SELECT
+			id,
+			email,
+			username,
+			profile_pic,
+			password,
+			insert_date
+		FROM user
+		WHERE uuid=?
+	`)
+
+	rows, err := statement.Query(uuid)
+	if nil != err {
+		return nil, verrors.DatabaseError(err.Error())
+	}
+
+	if !rows.Next() {
+		return nil, verrors.NotFound(verrors.UserNotFoundMessage)
+	}
+	defer rows.Close()
+
+	var id int64
+	var email string
+	var username string
+	var profilePic string
+	var password string
+	var insertDate int64
+
+	rows.Scan(
+		&id,
 		&email,
 		&username,
 		&profilePic,

@@ -2,11 +2,17 @@ module github.com/akrck02/whisper
 
 go 1.25.6
 
-require github.com/mattn/go-sqlite3 v1.14.34
+require (
+	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.5.3
+	github.com/joho/godotenv v1.5.1
+	github.com/mattn/go-sqlite3 v1.14.34
+	github.com/pion/webrtc/v4 v4.2.6
+	github.com/rs/zerolog v1.34.0
+	golang.org/x/crypto v0.48.0
+)
 
 require (
-	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pion/datachannel v1.6.0 // indirect
@@ -24,10 +30,7 @@ require (
 	github.com/pion/stun/v3 v3.1.1 // indirect
 	github.com/pion/transport/v4 v4.0.1 // indirect
 	github.com/pion/turn/v4 v4.1.4 // indirect
-	github.com/pion/webrtc/v4 v4.2.6 // indirect
-	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/net v0.50.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
